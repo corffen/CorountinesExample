@@ -47,7 +47,7 @@ class SeriesNetworkCallsActivity : AppCompatActivity() {
     }
 
     private fun setupObserver() {
-        viewModel.getUsers().observe(this, {
+        viewModel.getUsers().observe(this) {
             when (it.status) {
                 Status.SUCCESS -> {
                     progressBar.visibility = View.GONE
@@ -64,7 +64,7 @@ class SeriesNetworkCallsActivity : AppCompatActivity() {
                     Toast.makeText(this, it.message, Toast.LENGTH_LONG).show()
                 }
             }
-        })
+        }
     }
 
     private fun renderList(users: List<ApiUser>) {

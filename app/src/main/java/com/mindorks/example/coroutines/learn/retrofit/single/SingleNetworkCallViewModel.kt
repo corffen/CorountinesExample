@@ -4,6 +4,7 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.bumptech.glide.Glide.init
 import com.mindorks.example.coroutines.data.api.ApiHelper
 import com.mindorks.example.coroutines.data.local.DatabaseHelper
 import com.mindorks.example.coroutines.data.model.ApiUser
@@ -15,7 +16,9 @@ class SingleNetworkCallViewModel(
     private val dbHelper: DatabaseHelper
 ) : ViewModel() {
 
-    private val users = MutableLiveData<Resource<List<ApiUser>>>()
+    private val _users = MutableLiveData<Resource<List<ApiUser>>>()
+    val users: LiveData<Resource<List<ApiUser>>>
+        get() = _users
 
     init {
         fetchUsers()
@@ -23,18 +26,14 @@ class SingleNetworkCallViewModel(
 
     private fun fetchUsers() {
         viewModelScope.launch {
-            users.postValue(Resource.loading(null))
+            _users.postValue(Resource.loading(null))
             try {
                 val usersFromApi = apiHelper.getUsers()
-                users.postValue(Resource.success(usersFromApi))
+                _users.postValue(Resource.success(usersFromApi))
             } catch (e: Exception) {
-                users.postValue(Resource.error(e.toString(), null))
+                _users.postValue(Resource.error(e.toString(), null))
             }
         }
-    }
-
-    fun getUsers(): LiveData<Resource<List<ApiUser>>> {
-        return users
     }
 
 }

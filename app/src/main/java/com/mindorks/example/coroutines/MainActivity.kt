@@ -4,6 +4,7 @@ import android.content.Intent
 import android.os.Bundle
 import android.view.View
 import androidx.appcompat.app.AppCompatActivity
+import com.mindorks.example.coroutines.learn.concurrent.ConcurrentActivity
 import com.mindorks.example.coroutines.learn.errorhandling.exceptionhandler.ExceptionHandlerActivity
 import com.mindorks.example.coroutines.learn.errorhandling.supervisor.IgnoreErrorAndContinueActivity
 import com.mindorks.example.coroutines.learn.errorhandling.trycatch.TryCatchActivity
@@ -62,4 +63,7 @@ class MainActivity : AppCompatActivity() {
         startActivity(Intent(this@MainActivity, TwoLongRunningTasksActivity::class.java))
     }
 
+    fun startConcurrentActivity(view: View) {
+        startActivity(Intent(this@MainActivity, ConcurrentActivity::class.java))
+    }
 }

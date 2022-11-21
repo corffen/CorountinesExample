@@ -8,9 +8,7 @@ import com.mindorks.example.coroutines.data.api.ApiHelper
 import com.mindorks.example.coroutines.data.local.DatabaseHelper
 import com.mindorks.example.coroutines.data.model.ApiUser
 import com.mindorks.example.coroutines.utils.Resource
-import kotlinx.coroutines.async
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.supervisorScope
+import kotlinx.coroutines.*
 
 class IgnoreErrorAndContinueViewModel(
     private val apiHelper: ApiHelper,
@@ -26,34 +24,25 @@ class IgnoreErrorAndContinueViewModel(
     private fun fetchUsers() {
         viewModelScope.launch {
             users.postValue(Resource.loading(null))
-            try {
-                // supervisorScope is needed, so that we can ignore error and continue
-                // here, more than two child jobs are running in parallel under a supervisor, one child job gets failed, we can continue with other.
-                supervisorScope {
-                    val usersFromApiDeferred = async { apiHelper.getUsersWithError() }
-                    val moreUsersFromApiDeferred = async { apiHelper.getMoreUsers() }
+            supervisorScope {
+                val usersFromApiDeferred = async { apiHelper.getUsersWithError() }
+                val moreUsersFromApiDeferred = async { apiHelper.getMoreUsers() }
 
-                    val usersFromApi = try {
-                        usersFromApiDeferred.await()
-                    } catch (e: Exception) {
-                        emptyList()
-                    }
+                val usersFromApi = usersFromApiDeferred.await()
 
-                    val moreUsersFromApi = try {
-                        moreUsersFromApiDeferred.await()
-                    } catch (e: Exception) {
-                        emptyList()
-                    }
-
-                    val allUsersFromApi = mutableListOf<ApiUser>()
-                    allUsersFromApi.addAll(usersFromApi)
-                    allUsersFromApi.addAll(moreUsersFromApi)
-
-                    users.postValue(Resource.success(allUsersFromApi))
+                val moreUsersFromApi = try {
+                    moreUsersFromApiDeferred.await()
+                } catch (e: Exception) {
+                    emptyList()
                 }
-            } catch (e: Exception) {
-                users.postValue(Resource.error("Something Went Wrong", null))
+
+                val allUsersFromApi = mutableListOf<ApiUser>()
+                allUsersFromApi.addAll(usersFromApi)
+                allUsersFromApi.addAll(moreUsersFromApi)
+
+                users.postValue(Resource.success(allUsersFromApi))
             }
+            val userss = load { getUsers() }
         }
     }
 
@@ -61,4 +50,9 @@ class IgnoreErrorAndContinueViewModel(
         return users
     }
 
+    suspend fun <T> load(action: () -> T): T {
+        return withContext(Dispatchers.IO) {
+            action()
+        }
+    }
 }
