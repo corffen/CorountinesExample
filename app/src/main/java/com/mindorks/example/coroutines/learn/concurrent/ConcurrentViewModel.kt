@@ -23,31 +23,48 @@ class ConcurrentViewModel : ViewModel() {
     private val singleRunner = SingleRunner()
     private fun sortListBy(ascending: Boolean) {
         viewModelScope.launch {
+//            _sortList.value = mockSortArray(ascending)
+            /**
+             * 每次取消前一次的任务,然后再执行当前的任务
+             */
 //            _sortList.value = controlRunner.cancelPreviousThenRun {
 //                mockSortArray(ascending)
 //            }
-
-//            _sortList.value = singleRunner.afterPrevious {
-//                mockSortArray(ascending)
-//            }
-
-            _sortList.value = controlRunner.joinPreviousOrRun {
+            /**
+             * 串行执行,也就是前一个执行完,再执行当前的
+             */
+            _sortList.value = singleRunner.afterPrevious {
                 mockSortArray(ascending)
             }
+            /**
+             * 等待前一次执行完,否则
+             */
+//            _sortList.value = controlRunner.joinPreviousOrRun {
+//                mockSortArray(ascending)
+//            }
         }
     }
 
     private suspend fun mockSortArray(ascending: Boolean): String {
-        withContext(Dispatchers.IO) {
+      return  withContext(Dispatchers.IO) {
             val rand = Random(System.nanoTime())
             //模拟耗时操作
             delay((800..1200).random(rand).toLong())
+
+            if (ascending) {
+                generateArray(6).sortedArray().joinToString()
+            } else {
+                generateArray(7).sortedArrayDescending().joinToString()
+            }
         }
-        //排序
-        return if (ascending) {
-            intArrayOf(3, 4, 5, 1, 2, 9, 7).sortedArray().joinToString()
-        } else {
-            intArrayOf(3, 4, 5, 1, 2, 9, 7).sortedArrayDescending().joinToString()
+    }
+
+    private fun generateArray(size:Int):IntArray{
+        val nums = IntArray(size)
+        val rand = Random(System.nanoTime())
+        repeat(size) {
+            nums[it] = rand.nextInt(1,10)
         }
+        return nums
     }
 }
